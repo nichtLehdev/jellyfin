@@ -125,6 +125,9 @@ namespace Jellyfin.Server
 
             // Jellyfin.LiveTv
             yield return typeof(LiveTvManager).Assembly;
+
+            // Jellyfin.ArrIntegration
+            yield return typeof(Jellyfin.ArrIntegration.Services.RadarrApiService).Assembly;
         }
     }
 }

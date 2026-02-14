@@ -90,12 +90,13 @@ namespace Jellyfin.Server.Implementations.Security
                 auth.TryGetValue("Token", out token);
             }
 
-            if (_configurationManager.Configuration.EnableLegacyAuthorization && string.IsNullOrEmpty(token))
+            // Always accept X-Emby-Token / X-MediaBrowser-Token so API clients (e.g. Swagger) can send the key in a header.
+            if (string.IsNullOrEmpty(token))
             {
                 token = headers["X-Emby-Token"];
             }
 
-            if (_configurationManager.Configuration.EnableLegacyAuthorization && string.IsNullOrEmpty(token))
+            if (string.IsNullOrEmpty(token))
             {
                 token = headers["X-MediaBrowser-Token"];
             }
@@ -109,6 +110,9 @@ namespace Jellyfin.Server.Implementations.Security
             {
                 token = queryString["api_key"];
             }
+
+            // Normalize: trim so pasted tokens (e.g. from Swagger) match stored values
+            token = token?.Trim();
 
             var authInfo = new AuthorizationInfo
             {
@@ -235,7 +239,29 @@ namespace Jellyfin.Server.Implementations.Security
                 auth = httpReq.Headers["X-Emby-Authorization"];
             }
 
-            return auth.Count > 0 ? GetAuthorization(auth[0]) : null;
+            if (auth.Count == 0)
+            {
+                return null;
+            }
+
+            var parsed = GetAuthorization(auth[0]);
+            if (parsed is not null)
+            {
+                return parsed;
+            }
+
+            // Support "Authorization: Bearer <token>" for API clients (e.g. Swagger, curl, Postman)
+            var value = auth[0].AsSpan();
+            if (value.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            {
+                var token = value.Slice(7).Trim();
+                if (token.Length > 0)
+                {
+                    return new Dictionary<string, string> { ["Token"] = token.ToString() };
+                }
+            }
+
+            return null;
         }
 
         /// <summary>
