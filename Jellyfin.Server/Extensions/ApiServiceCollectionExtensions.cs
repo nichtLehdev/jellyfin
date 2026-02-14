@@ -217,8 +217,8 @@ namespace Jellyfin.Server.Extensions
                 {
                     Type = SecuritySchemeType.ApiKey,
                     In = ParameterLocation.Header,
-                    Name = "Authorization",
-                    Description = "API key header parameter"
+                    Name = "X-Emby-Token",
+                    Description = "API key. Use the token from POST /Users/AuthenticateByName (AccessToken) or from Dashboard → API Keys."
                 });
 
                 // Add all xml doc files to swagger generator.

@@ -214,12 +214,13 @@ public class UserController : BaseJellyfinApiController
 
         try
         {
+            // Use fallbacks when client/device headers are missing (e.g. Swagger, curl, or API-only clients)
             var result = await _sessionManager.AuthenticateNewSession(new AuthenticationRequest
             {
-                App = auth.Client,
-                AppVersion = auth.Version,
-                DeviceId = auth.DeviceId,
-                DeviceName = auth.Device,
+                App = auth.Client ?? "Jellyfin API",
+                AppVersion = auth.Version ?? "1.0.0",
+                DeviceId = auth.DeviceId ?? "api-client",
+                DeviceName = auth.Device ?? "API Client",
                 Password = request.Pw,
                 RemoteEndPoint = HttpContext.GetNormalizedRemoteIP().ToString(),
                 Username = request.Username
